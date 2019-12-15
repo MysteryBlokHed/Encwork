@@ -1,5 +1,6 @@
 # Created by MysteryBlokHed on 13/12/2019.
 import socket
+from datetime import datetime
 from threading import Thread
 from time import sleep
 
@@ -8,8 +9,10 @@ from .encryption import *
 HEADERSIZE = 16
 global peer_public_key
 global latest_message
+global latest_time
 peer_public_key = None
 latest_message = ""
+latest_time = datetime.now()
 
 class P2P(object):
     def __init__(self, port=2006, peer_port=2006):
@@ -17,8 +20,9 @@ class P2P(object):
         self.peer_port = peer_port
         self._private_key = gen_private_key()
         print("Generated private key.")
+        print("Setting up client socket...")
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("Set up client mode socket.")
+        print("Set up client socket.")
 
     def headerify(self, message):
         """Add the 16-byte header (specifies msg length) to the message"""
@@ -36,7 +40,7 @@ class P2P(object):
                 print("Sent public key.")
                 break
             except:
-                print(f"Connection to {target} failed. Waiting 1 second then trying again...")
+                print(f"Connection to {target} failed. Waiting 15 seconds then trying again...")
                 sleep(15)
         print("Ready to send messages.")
 
@@ -56,11 +60,14 @@ class P2P(object):
     def stream_messages(self):
         """Create a generator that will stream new messages from the peer."""
         global latest_message
+        global latest_time
         s_latest_message = latest_message
+        s_latest_time = latest_time
         while True:
-            if s_latest_message != latest_message:
+            if s_latest_message != latest_message or latest_time > s_latest_time:
                 yield latest_message
                 s_latest_message = latest_message
+                s_latest_time = latest_time
 
 class GetMessages(Thread):
     def __init__(self, target, key, port):
@@ -70,9 +77,9 @@ class GetMessages(Thread):
         print("Setting up server socket...")
         self._sv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Binding...")
-        self._sv.bind(("localhost", self.port))
+        self._sv.bind((socket.gethostbyname(socket.gethostname()), self.port))
         self._sv.listen(4)
-        print("Done.")
+        print("Set up server socket.")
         self._key = key
 
     def run(self):
@@ -83,7 +90,7 @@ class GetMessages(Thread):
         # Accept connection and make sure it's from the target
         while True:
             self._s, addr = self._sv.accept()
-            print("Connection recieved!")
+            print("Connection received!")
             print("Checking target...")
             if addr[0] == self._target:
                 print("Target verified!")
@@ -93,7 +100,7 @@ class GetMessages(Thread):
                 cont = False
             break
 
-        # Recieve public key
+        # Receive public key
         print("Receiving public key...")
         try:
             full_msg = b""
@@ -119,8 +126,8 @@ class GetMessages(Thread):
             print(e)
             cont = False
 
-        # Message recieve loop
-        print("Ready to recieve messages.")
+        # Message receive loop
+        print("Ready to receive messages.")
         while cont:
             full_msg = b""
             try:
@@ -138,10 +145,11 @@ class GetMessages(Thread):
                     if(len(full_msg) - HEADERSIZE == msg_len):
                         break
             except Exception as e:
-                print("Failed to recieve peer's message.")
+                print("Failed to receive peer's message.")
                 print(e)
                 cont = False
             
             # Decode message
             # print(decrypt(full_msg[HEADERSIZE:], self._key))
             latest_message = decrypt(full_msg[HEADERSIZE:], self._key)
+            latest_time = datetime.now()
