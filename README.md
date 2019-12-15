@@ -12,7 +12,7 @@ Download it using `pip install "cryptography>=2.8"`, or download the wheel [here
 
 ## Usage
 To get the module through PyPi: `pip install ttchat`.  
-While TTChat comes with a `__main__.py` file that you can easily use, you can also get the module to build your own UI that will work with any other TTChat instance.  
+While TTChat comes with a `__main__.py` file that you can easily use, you can also get the module to build your own UI that will work with any other TTChat program.  
 
 ### The `__main__.py` file
 Run it as any other python script, using `python` or `python3 __main__.py`. It's a very short piece of code, as it just uses functions from `ttchat.p2p`. Simply give it a target machine and it'll start trying to connect.  

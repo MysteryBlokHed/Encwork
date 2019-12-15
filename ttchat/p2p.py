@@ -7,10 +7,14 @@ from .encryption import *
 
 HEADERSIZE = 16
 global peer_public_key
+global latest_message
 peer_public_key = None
+latest_message = ""
 
 class P2P(object):
-    def __init__(self):
+    def __init__(self, port=2006, peer_port=2006):
+        self.port = port
+        self.peer_port = peer_port
         self._private_key = gen_private_key()
         print("Generated private key.")
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,11 +25,11 @@ class P2P(object):
         return bytes(f"{len(message):<{HEADERSIZE}}", "utf-8") + message
     
     def start(self, target):
-        GetMessages(target, self._private_key).start()
+        GetMessages(target, self._private_key, self.port).start()
         while True:
             try:
                 print(f"Trying to connect to target ({target})...")
-                self._s.connect((target, 2006))
+                self._s.connect((target, self.peer_port))
                 print("Connection established to target.")
                 print("Sending public RSA key...")
                 self._s.send(self.headerify(get_public_key_text(get_public_key(self._private_key))))
@@ -49,20 +53,31 @@ class P2P(object):
         self._s.send(enc_message)
         print("Sent message.")
 
+    def stream_messages(self):
+        """Create a generator that will stream new messages from the peer."""
+        global latest_message
+        s_latest_message = latest_message
+        while True:
+            if s_latest_message != latest_message:
+                yield latest_message
+                s_latest_message = latest_message
+
 class GetMessages(Thread):
-    def __init__(self, target, key):
+    def __init__(self, target, key, port):
+        self.port = port
         Thread.__init__(self)
         self._target = target
         print("Setting up server socket...")
         self._sv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Binding...")
-        self._sv.bind(("localhost", 2006))
+        self._sv.bind(("localhost", self.port))
         self._sv.listen(4)
         print("Done.")
         self._key = key
 
     def run(self):
         global peer_public_key
+        global latest_message
         print("Run thread started.")
 
         # Accept connection and make sure it's from the target
@@ -128,4 +143,5 @@ class GetMessages(Thread):
                 cont = False
             
             # Decode message
-            print(decrypt(full_msg[HEADERSIZE:], self._key))
+            # print(decrypt(full_msg[HEADERSIZE:], self._key))
+            latest_message = decrypt(full_msg[HEADERSIZE:], self._key)
