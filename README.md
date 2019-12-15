@@ -2,7 +2,7 @@
 Peer-to-peer chat software written in Python.
 
 ## How does it work?
-TTChat uses 4096-byte long RSA keys to encrypt/decrypt messages. Each machine will set up a socket that acts as a server, and one that acts as a client. The client will try to connect to a specified target. The server will accept connections and check if the origin is the target. If it is, it'll get the public key and be ready to receive messages. Otherwise, it'll kill the connection and wait for the target to connect.
+TTChat uses 4096-byte long RSA keys to encrypt/decrypt messages. Each machine will set up a server socket, and a client socket. The client will try to connect to a specified target, while the server accepts connections and checks if the origin is the target. If it's not, it'll kill the connection and wait for the target to connect. Once both servers have confirmed the targets, they will exchange public keys and be ready to chat.
 
 ## Requirements
 **Python v3.6+**  
