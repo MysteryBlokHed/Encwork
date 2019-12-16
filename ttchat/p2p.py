@@ -15,7 +15,7 @@ latest_message = ""
 latest_time = datetime.now()
 
 class P2P(object):
-    def __init__(self, port=2006, peer_port=2006):
+    def __init__(self, port: int=2006, peer_port: int=2006):
         self.port = port
         self.peer_port = peer_port
         self._private_key = gen_private_key()
@@ -24,11 +24,11 @@ class P2P(object):
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Set up client socket.")
 
-    def headerify(self, message):
+    def headerify(self, message: bytes):
         """Add the 16-byte header (specifies msg length) to the message"""
         return bytes(f"{len(message):<{HEADERSIZE}}", "utf-8") + message
     
-    def start(self, target):
+    def start(self, target: str):
         GetMessages(target, self._private_key, self.port).start()
         while True:
             try:
@@ -44,7 +44,7 @@ class P2P(object):
                 sleep(15)
         print("Ready to send messages.")
 
-    def send_msg(self, message):
+    def send_msg(self, message: str):
         """Send an encrypted message to the peer."""
         global peer_public_key
         # Wait until a public key is available
@@ -70,7 +70,7 @@ class P2P(object):
                 s_latest_time = latest_time
 
 class GetMessages(Thread):
-    def __init__(self, target, key, port):
+    def __init__(self, target: str, key, port: int):
         self.port = port
         Thread.__init__(self)
         self._target = target
@@ -95,10 +95,10 @@ class GetMessages(Thread):
             if addr[0] == self._target:
                 print("Target verified!")
                 cont = True
+                break
             else:
                 print(f"Connection from unknown source ({addr[0]})")
-                cont = False
-            break
+                self._s.close()
 
         # Receive public key
         print("Receiving public key...")
