@@ -1,6 +1,7 @@
 # Created by MysteryBlokHed on 13/12/2019.
 import socket
 from datetime import datetime
+from math import ceil
 from threading import Thread
 from time import sleep
 
@@ -51,14 +52,23 @@ class P2P(object):
         while peer_public_key == None:
             print("Waiting for public key to encrypt message...")
             sleep(5)
-        
-        enc_message = encrypt(bytes(message, "ascii"), peer_public_key)
-        enc_message = self.headerify(enc_message)
-        self._s.send(enc_message)
-        print("Sent message.")
+
+        # Tell the user how many messages that come in are a part of this one
+        # (Done due to the size limit of RSA keys)
+        split_size = ceil(len(message)/4096)
+        split_size_enc = encrypt(bytes(str(split_size), "ascii"), peer_public_key)
+        self._s.send(split_size_enc)
+        # Send the message in as many parts as needed
+        for i in range(split_size):
+            enc_message = encrypt(bytes(message[4096*i:4096*(i+1)], "ascii"), peer_public_key)
+            enc_message = self.headerify(enc_message)
+            self._s.send(enc_message)
+            print(f"Sent message chunk {i+1}.", end="\r")
+        print("\nSent message.")
 
     def stream_messages(self):
         """Create a generator that will stream new messages from the peer."""
+        # Pull and set globals to communicate with GetMessages Thread
         global latest_message
         global latest_time
         s_latest_message = latest_message
@@ -129,6 +139,7 @@ class GetMessages(Thread):
         # Message receive loop
         print("Ready to receive messages.")
         while cont:
+            # Get message length
             full_msg = b""
             try:
                 new_msg = True
@@ -143,13 +154,37 @@ class GetMessages(Thread):
                     full_msg += msg
 
                     if(len(full_msg) - HEADERSIZE == msg_len):
-                        break
+                        actual_full_message = []
+                        # Get all parts of message
+                        for i in range(full_msg_len):
+                            while cont:
+                                full_msg = b""
+                                try:
+                                    new_msg = True
+
+                                    while True:
+                                        msg = self._s.recv(16)
+
+                                        if new_msg:
+                                            msg_len = int(msg[:HEADERSIZE])
+                                            new_msg = False
+                                        
+                                        full_msg += msg
+
+                                        if(len(full_msg) - HEADERSIZE == msg_len):
+                                            actual_full_message.append(full_msg)
+                                except Exception as e:
+                                    print("Failed to receive peer's message.")
+                                    print(e)
+                                    cont = False
+                                break
+                        # Put the message together
+                        full_message_dec = ""
+                        for i in actual_full_message:
+                            full_message_dec += decrypt(i)
+                        latest_message = full_message_dec
+                        latest_time = datetime.now()            
             except Exception as e:
                 print("Failed to receive peer's message.")
                 print(e)
                 cont = False
-            
-            # Decode message
-            # print(decrypt(full_msg[HEADERSIZE:], self._key))
-            latest_message = decrypt(full_msg[HEADERSIZE:], self._key)
-            latest_time = datetime.now()
