@@ -6,6 +6,7 @@ from threading import Thread
 from time import sleep
 
 from .encryption import *
+from. exceptions import *
 
 HEADERSIZE = 16
 global peer_public_key
@@ -53,15 +54,17 @@ class P2P(object):
             print("Waiting for public key to encrypt message...")
             sleep(5)
 
-        # Tell the user how many messages that come in are a part of this one
+        # Tell the peer many messages that come in are a part of this one
         # (Done due to the size limit of RSA keys)
-        split_size = ceil(len(message)/4096)
-        split_size_enc = encrypt(bytes(str(split_size), "ascii"), peer_public_key)
+        split_size = ceil(len(message)/446)
+        print(split_size)
+        split_size_enc = self.headerify(encrypt(bytes(str(split_size), "ascii"), peer_public_key))
         self._s.send(split_size_enc)
         # Send the message in as many parts as needed
         for i in range(split_size):
-            enc_message = encrypt(bytes(message[4096*i:4096*(i+1)], "ascii"), peer_public_key)
-            enc_message = self.headerify(enc_message)
+            print(f"Chunk 1: {bytes(message[446*i:446*(i+1)], 'ascii')}")
+            print(f"Chunk 1 Length: {len(bytes(message[446*i:446*(i+1)], 'ascii'))}")
+            enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "ascii"), peer_public_key))
             self._s.send(enc_message)
             print(f"Sent message chunk {i+1}.", end="\r")
         print("\nSent message.")
@@ -87,7 +90,7 @@ class GetMessages(Thread):
         print("Setting up server socket...")
         self._sv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Binding...")
-        self._sv.bind((socket.gethostbyname(socket.gethostname()), self.port))
+        self._sv.bind(("0.0.0.0", self.port))
         self._sv.listen(4)
         print("Set up server socket.")
         self._key = key
@@ -139,6 +142,7 @@ class GetMessages(Thread):
         # Message receive loop
         print("Ready to receive messages.")
         while cont:
+            print("Receiving...")
             # Get message length
             full_msg = b""
             try:
@@ -149,42 +153,59 @@ class GetMessages(Thread):
 
                     if new_msg:
                         msg_len = int(msg[:HEADERSIZE])
+                        print(f"Got header: {msg[:HEADERSIZE]}")
                         new_msg = False
                     
                     full_msg += msg
 
                     if(len(full_msg) - HEADERSIZE == msg_len):
+                        print("Beginning actual decryption...")
+                        # Decrypt length and convert to int
+                        full_msg_len = int(decrypt(full_msg[HEADERSIZE:], self._key))
                         actual_full_message = []
                         # Get all parts of message
                         for i in range(full_msg_len):
-                            while cont:
-                                full_msg = b""
-                                try:
-                                    new_msg = True
+                            print(f"Iter {i}")
+                            full_msg = b""
+                            try:
+                                print("Try/Except entered")
+                                new_msg = True
 
-                                    while True:
-                                        msg = self._s.recv(16)
+                                while True:
+                                    msg = self._s.recv(16)
 
-                                        if new_msg:
-                                            msg_len = int(msg[:HEADERSIZE])
-                                            new_msg = False
-                                        
-                                        full_msg += msg
+                                    if new_msg:
+                                        msg_len = int(msg[:HEADERSIZE])
+                                        print("Got header")
+                                        new_msg = False
+                                    
+                                    full_msg += msg
 
-                                        if(len(full_msg) - HEADERSIZE == msg_len):
-                                            actual_full_message.append(full_msg)
-                                except Exception as e:
-                                    print("Failed to receive peer's message.")
-                                    print(e)
-                                    cont = False
-                                break
+                                    if(len(full_msg) - HEADERSIZE == msg_len):
+                                        actual_full_message.append(full_msg[HEADERSIZE:])
+                                        print("Full message piece found")
+                                        raise ExitTryExcept
+                            except ExitTryExcept:
+                                print("Exited try/except thing (intentionally).")
+                                pass
+                            # except Exception as e:
+                            #     print("Failed to receive peer's message.")
+                            #     print(e)
+                            #     cont = False
+
                         # Put the message together
-                        full_message_dec = ""
+                        print("Beginning assembly...")
+                        full_message_dec = b""
                         for i in actual_full_message:
-                            full_message_dec += decrypt(i)
+                            print(f"Assembling chunk...")
+                            full_message_dec += decrypt(i, self._key)
+                        print("Done.")
                         latest_message = full_message_dec
-                        latest_time = datetime.now()            
-            except Exception as e:
-                print("Failed to receive peer's message.")
-                print(e)
-                cont = False
+                        latest_time = datetime.now()
+                        print("Super done.")
+                        raise ExitTryExcept
+            except ExitTryExcept as e:
+                print("Exited try/except thing (intentionally).")
+                # print("Failed to receive peer's message.")
+                # print(e)
+                # cont = False
