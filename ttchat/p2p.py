@@ -6,7 +6,7 @@ from threading import Thread
 from time import sleep
 
 from .encryption import *
-from. exceptions import *
+from .exceptions import *
 
 HEADERSIZE = 16
 global peer_public_key
