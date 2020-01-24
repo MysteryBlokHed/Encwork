@@ -1,4 +1,5 @@
 # TTChat
+
 Peer-to-peer chat software written in Python.
 
 ## What is it for?
@@ -18,8 +19,13 @@ If you don't already have it, download it [here](https://www.python.org/download
 **cryptography>=2.8**  
 Download it using `pip install "cryptography>=2.8"`, or download the wheel [here](https://pypi.org/project/cryptography/2.8/#files) and use `pip install (.whl file)`.
 
-## Usage
+## Installation
+### PyPI
 To get the module through PyPi: `pip install ttchat`.  
+### GitHub (Pulled Repo)
+To install the module by pulling the repo: `python setup.py install`.
+
+## Usage
 While TTChat comes with a fully functional `__main__.py` file, it is mainly meant to demonstrate how TTChat works. You can get the module to build your own UI that will work with any other program that uses TTChat, including the example one.
 
 ### The `__main__.py` file
