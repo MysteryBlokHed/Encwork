@@ -1,13 +1,12 @@
-# TTChat
-
+# Encwork
 Peer-to-peer chat software written in Python.
 
 ## What is it for?
-TTChat is designed to be a safe chat system that will generate new keys for each session.
+Encwork is designed to be a safe chat system that will generate new keys for each session.
 It's not intended to be used as WhatsApp or a similar chat program, it's for throwaway chats that don't need to/shouldn't be kept.
 
 ## How is it secured?
-TTChat uses 4096-bit long RSA keys for every message, other than for the public key exchange, which cannot be encrypted.  
+Encwork uses 4096-bit long RSA keys for every message, other than for the public key exchange, which cannot be encrypted.  
 This should not be a problem, as no computer can get the private key from the public key, and the keys are recreated for every new chat session.
 
 ### How does it work?
@@ -21,16 +20,16 @@ Download it using `pip install "cryptography>=2.8"`, or download the wheel [here
 
 ## Installation
 ### PyPI
-To get the module through PyPi: `pip install ttchat`.  
+To get the module through PyPi: `pip install encwork`.  
 ### GitHub (Pulled Repo)
 To install the module by pulling the repo: `python setup.py install`.
 
 ## Usage
-While TTChat comes with a fully functional `__main__.py` file, it is mainly meant to demonstrate how TTChat works. You can get the module to build your own UI that will work with any other program that uses TTChat, including the example one.
+While Encwork comes with a fully functional `__main__.py` file, it is mainly meant to demonstrate how Encwork works. You can get the module to build your own UI that will work with any other program that uses Encwork, including the example one.
 
 ### The `__main__.py` file
-Run it as any other python script, using `python` or `python3 __main__.py`. It's a very short piece of code, as it just uses functions from `ttchat.p2p`. Simply give it a target machine and it'll start trying to connect.  
+Run it as any other python script, using `python` or `python3 __main__.py`. It's a very short piece of code, as it just uses functions from `encwork.p2p`. Simply give it a target machine and it'll start trying to connect.  
 Once you see `Ready to receive messages.` and/or `Ready to send messages.`, the connection has been completed and messaging is ready.
 
 # Documentation
-To see how to use the TTChat module yourself, check out the [Documentation](https://github.com/MysteryBlokHed/ttchat/wiki).
+To see how to use the Encwork module yourself, check out the [Documentation](https://github.com/MysteryBlokHed/Encwork/wiki).
