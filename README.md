@@ -1,5 +1,5 @@
 # Encwork
-Peer-to-peer chat software written in Python.
+RSA-encrypted communication software written in Python.
 
 ## What is it for?
 Encwork is designed to be a safe chat system that will generate new keys for each session.
