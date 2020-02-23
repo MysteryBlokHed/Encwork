@@ -63,11 +63,11 @@ class P2P(object):
         # Tell the peer many messages that come in are a part of this one
         # (Done due to the size limit of RSA keys)
         split_size = ceil(len(message)/446)
-        split_size_enc = self.headerify(encrypt(bytes(str(split_size), "ascii"), peer_public_key))
+        split_size_enc = self.headerify(encrypt(bytes(str(split_size), "utf-8"), peer_public_key))
         self._s.send(split_size_enc)
         # Send the message in as many parts as needed
         for i in range(split_size):
-            enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "ascii"), peer_public_key))
+            enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), peer_public_key))
             self._s.send(enc_message)
         print("Sent message.")
 

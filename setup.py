@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="encwork",
-    version="0.1.1",
+    version="0.1.2",
     author="Adam Thompson-Sharpe",
     author_email="adamthompsonsharpe@gmail.com",
-    description="RSA-encrypted chat software written in Python.",
+    description="RSA-encrypted communication software written in Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/MysteryBlokHed/Encwork",

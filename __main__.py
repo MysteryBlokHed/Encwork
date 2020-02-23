@@ -1,5 +1,5 @@
 # Created by MysteryBlokHed on 14/12/2019.
-from ttchat.p2p import P2P
+from encwork.p2p import P2P
 from threading import Thread
 
 class PrintMessages(Thread):
