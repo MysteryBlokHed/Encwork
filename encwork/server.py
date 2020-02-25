@@ -26,11 +26,11 @@ class Server(object):
         self._private_key = gen_private_key()
         self._latest_statuses.append(Status(2))
         # Set up socket
-        self._latest_statuses.append(Status(3))
+        self._latest_statuses.append(Status(3, "server"))
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._s.bind(("0.0.0.0", port))
         self._s.listen(4)
-        self._latest_statuses.append(Status(4))
+        self._latest_statuses.append(Status(4, "server"))
     
     def headerify(self, message: bytes):
         """Add the 16-byte header (specifies msg length) to the message"""

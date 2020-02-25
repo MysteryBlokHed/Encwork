@@ -24,7 +24,6 @@ Download it using `pip install "cryptography>=2.8"`, or download the wheel [here
 ## Installation
 ### PyPI
 To get the module through PyPi: `pip install encwork`.  
-Note that the current version of Encwork with Servers is not currently on PyPI.  
 ### GitHub (Pulled Repo)
 To install the module by pulling the repo: `python setup.py install`.
 
