@@ -50,17 +50,17 @@ class Server(object):
         # Accept connections
         while True:
             cs, addr = self._s.accept()
-            self._sockets[addr[0]] = cs
-            self._latest_statuses.append(Status(9, addr[0]))
+            self._sockets[addr] = cs
+            self._latest_statuses.append(Status(9, addr))
             # Start new thread
             Thread(target=self._connection).start()
             # Send public key
-            self._latest_statuses.append(Status(10, addr[0]))
+            self._latest_statuses.append(Status(10, addr))
             cs.send(self.headerify(get_public_key_text(get_public_key(self._private_key))))
-            self._latest_statuses.append(Status(15, addr[0]))
+            self._latest_statuses.append(Status(15, addr))
 
             # Receive public key
-            self._latest_statuses.append(Status(18, addr[0]))
+            self._latest_statuses.append(Status(18, addr))
             try:
                 full_msg = b""
                 new_msg = True
@@ -76,12 +76,12 @@ class Server(object):
 
                     if(len(full_msg) - HEADERSIZE == msg_len):
                         # Save the public key
-                        self._peer_public_keys[addr[0]] = full_msg[HEADERSIZE:]
-                        self._latest_statuses.append(Status(11, addr[0]))
+                        self._peer_public_keys[addr] = full_msg[HEADERSIZE:]
+                        self._latest_statuses.append(Status(11, addr))
                         cont = True
                         break
             except Exception as e:
-                self._latest_statuses.append(Status(19, addr[0]))
+                self._latest_statuses.append(Status(19, addr))
                 cont = False
             
             # Message receive loop
@@ -100,7 +100,7 @@ class Server(object):
                         full_msg += msg
 
                         if(len(full_msg) - HEADERSIZE == msg_len):
-                            self._latest_statuses.append(Status(7, addr[0]))
+                            self._latest_statuses.append(Status(7, addr))
                             # Decrypt length and convert to int
                             full_msg_len = int(decrypt(full_msg[HEADERSIZE:], self._private_key))
                             actual_full_message = []
@@ -125,14 +125,14 @@ class Server(object):
                                 except ExitTryExcept:
                                     pass
                                 except Exception as e:
-                                    self._latest_statuses.append(Status(21, addr[0]))
+                                    self._latest_statuses.append(Status(21, addr))
                                     cont = False
 
                             # Assemble message
                             full_message_dec = b""
                             for i in actual_full_message:
                                 full_message_dec += decrypt(i, self._private_key)
-                            self._latest_statuses.append(Status(8, (full_message_dec, addr[0])))
+                            self._latest_statuses.append(Status(8, (full_message_dec, addr)))
                             raise ExitTryExcept
                 except ExitTryExcept:
                     pass
