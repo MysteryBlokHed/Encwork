@@ -18,13 +18,11 @@ latest_time = datetime.now()
 
 class P2P(object):
     """
-    port (int) - The port to host Encwork on (locally).  
-    peer_port (int) - The port that the peer is hosting Encwork on.  
-    mode (str) - Either "chat" or "ft".  
-        chat - The original reason for Encwork, which is just a standard chat system.  
-        ft - A file transfer between the peers. Note that all files from peers will be immediately downloaded.
+    `port: int` - The port to host Encwork on.
+
+    `peer_port: int` - The port that the peer is hosting Encwork on.
     """
-    def __init__(self, port: int=2006, peer_port: int=2006, mode="chat"):
+    def __init__(self, port: int=2006, peer_port: int=2006):
         self.port = port
         self.peer_port = peer_port
         self._private_key = gen_private_key()

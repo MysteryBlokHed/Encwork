@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="encwork",
-    version="0.1.2",
+    version="1.0.0",
     author="Adam Thompson-Sharpe",
     author_email="adamthompsonsharpe@gmail.com",
     description="RSA-encrypted communication software written in Python.",
