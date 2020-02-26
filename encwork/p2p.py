@@ -138,8 +138,14 @@ class P2P(object):
             except ExitTryExcept:
                 pass
     
-    def start(self, target: str):
-        """Start the Encwork connection."""
+    def start(self, target: str, utf8: bool=True):
+        """
+        Start the Encwork connection.
+
+        `target: str` The IP to connect to/receive connection from.
+
+        `utf8: bool` Whether or not the incoming messages are encoded as UTF-8. Must be `False` for receiving files such as executables or media.
+        """
         # Set up server
         self._target = target
         self._latest_statuses.append(Status(3, "server"))
@@ -164,8 +170,14 @@ class P2P(object):
                 self._latest_statuses.append(Status(14, target))
                 sleep(5)
 
-    def send_msg(self, message: str):
-        """Send a message to the peer."""
+    def send_msg(self, message: str or bytes, utf8: bool=True):
+        """
+        Send a message to the peer.
+
+        `message: str or bytes` The message to send. Should be str if utf8=True, and bytes if utf8=False.
+
+        `utf8: bool` Whether or not to encode the message as UTF-8. Essentially required for sending files such as executables or media.
+        """
         # Check if the target is real
         if self._target is None:
             raise NoTargetError("No target is available to send messages to.")
@@ -176,9 +188,13 @@ class P2P(object):
         # (Done due to the size limit of RSA keys)
         split_size = ceil(len(message)/446)
         split_size_enc = self.headerify(encrypt(bytes(str(split_size), "utf-8"), self._peer_public_key))
+        split_size_enc = self.headerify(encrypt(bytes(str(split_size), "utf-8"), self._peer_public_key))
         self._s.send(split_size_enc)
         # Send the message in as many parts as needed
         for i in range(split_size):
-            enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key))
+            if utf8:
+                enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key))
+            else:
+                enc_message = self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_key))
             self._s.send(enc_message)
-        print("Sent message.")
+        self._latest_statuses.append(Status(17, self._target))

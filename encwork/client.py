@@ -146,11 +146,13 @@ class Client(object):
         self._target = target
         Thread(target=self._connection).start()
     
-    def send_msg(self, message: str):
+    def send_msg(self, message: str, utf8: bool=True):
         """
         Send a message to the server.
 
-        `message: str` The message to send.
+        `message: str` The message to send. Should be str if utf8=True, and bytes if utf8=False.
+
+        `utf8: bool` Whether or not to encode the message as UTF-8. Must be `False` for sending files such as executables or media.
         """
         # See if there is a target
         if self._target is None:
@@ -167,4 +169,8 @@ class Client(object):
         # Send the message in as many parts as needed
         self._latest_statuses.append(Status(16, self._target))
         for i in range(split_size):
-            self._s.send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key)))
+            if utf8:
+                self._s.send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key)))
+            else:
+                self._s.send(self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_key)))
+        self._latest_statuses.append(Status(17, self._target))

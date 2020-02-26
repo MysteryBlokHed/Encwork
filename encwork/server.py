@@ -132,22 +132,32 @@ class Server(object):
                             full_message_dec = b""
                             for i in actual_full_message:
                                 full_message_dec += decrypt(i, self._private_key)
-                            self._latest_statuses.append(Status(8, (full_message_dec, addr)))
+                            if self._utf8:
+                                self._latest_statuses.append(Status(8, (full_message_dec.decode("utf-8"), addr)))
+                            else:
+                                self._latest_statuses.append(Status(8, (full_message_dec, addr)))
                             raise ExitTryExcept
                 except ExitTryExcept:
                     pass
 
-    def start(self):
-        """Start the Encwork server."""
+    def start(self, utf8: bool=True):
+        """
+        Start the Encwork server.
+
+        `utf8: bool` Whether or not the incoming messages are encoded as UTF-8. Must be `False` for receiving files such as executables or media.
+        """
+        self._utf8 = utf8
         Thread(target=self._connection).start()
     
-    def send_msg(self, message: str, target: str):
+    def send_msg(self, message: str, target: tuple, utf8: bool=True):
         """
         Send a message to a target.
 
-        `message: str` The message to send.
+        `message: str or bytes` The message to send. Should be str if utf8=True, and bytes if utf8=False.
 
-        `target: str` The IP to send the message to. They must have already connected to the server and have sent their public key.
+        `target: tuple` The IP & port to send the message to. They must have already connected to the server and have sent their public key.
+
+        `utf8: bool` Whether or not to encode the message as UTF-8. Must be `False` for sending files such as executables or media.
         """
         # Check if the target is real
         if target not in self._sockets:
@@ -164,4 +174,8 @@ class Server(object):
         # Send the message in as many parts as needed
         self._latest_statuses.append(Status(16, target))
         for i in range(split_size):
-            self._sockets[target].send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_keys[target])))
+            if utf8:
+                self._sockets[target].send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_keys[target])))
+            else:
+                self._sockets[target].send(self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_keys[target])))
+        self._latest_statuses.append(Status(17, target))
