@@ -111,7 +111,7 @@ class Server(object):
                                     new_msg = True
 
                                     while True:
-                                        msg = self._s.recv(16)
+                                        msg = cs.recv(16)
 
                                         if new_msg:
                                             msg_len = int(msg[:HEADERSIZE])
