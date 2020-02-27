@@ -1,11 +1,11 @@
 # Encwork
-RSA-encrypted communication software written in Python.
+RSA-encrypted networking library.
 
 ## What is it for?
-Encwork is designed to be a safe communication system that will generate new keys for each session. It can be used for CLI's or command line tools, general networking that should be encrypted, or throwaway chats.
+Encwork is designed to be a safe networking system that will generate new keys for each session. It can be used for CLI's or command line tools, general networking that should be encrypted, or throwaway chats.
 
 ## How is it secured?
-Encwork uses 4096-bit long RSA keys for every message, other than for the public key exchange, which cannot be encrypted.  
+Encwork uses 4096-bit RSA keys (size changable, 4096 recommended) for every message other than for the public key exchange, which cannot be encrypted and does not need to be.  
 This should not be a problem, as no computer can get the private key from the public key, and the keys are recreated for every new session.
 
 ## How does it work?

@@ -8,7 +8,7 @@ setuptools.setup(
     version="1.0.3",
     author="Adam Thompson-Sharpe",
     author_email="adamthompsonsharpe@gmail.com",
-    description="RSA-encrypted communication software written in Python.",
+    description="RSA-encrypted networking library.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/MysteryBlokHed/Encwork",
