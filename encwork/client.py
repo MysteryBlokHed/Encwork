@@ -128,7 +128,10 @@ class Client(object):
                                 full_message_dec = b""
                                 for i in actual_full_message:
                                     full_message_dec += decrypt(i, self._private_key)
-                                self._latest_statuses.append(Status(8, (full_message_dec, self._target)))
+                                if self._utf8:
+                                    self._latest_statuses.append(Status(8, (full_message_dec.decode("utf-8"), self._target)))
+                                else:
+                                    self._latest_statuses.append(Status(8, (full_message_dec, self._target)))
                                 raise ExitTryExcept
                     except ExitTryExcept:
                         pass

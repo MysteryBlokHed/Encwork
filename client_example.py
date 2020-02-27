@@ -20,7 +20,7 @@ class StatusThread(Thread):
             if status["code"] == 8: # Message received
                 # Convert sent date to datetime object
                 date_array = []
-                for i in status["data"][0].decode("utf-8").split("-"):
+                for i in status["data"][0].split("-"):
                     date_array.append(int(i))
                 date = datetime(*date_array)
                 # From client to server
