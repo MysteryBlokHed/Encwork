@@ -13,7 +13,6 @@ class StatusThread(Thread):
     def run(self):
         global ready_to_send
         for status in self._p2p.statuses():
-            print(f"[{status['code']}] {status['data']}")
             if status["code"] == 8: # Message received
                 print(f"[{status['data'][1][0]}] {status['data'][0]}")
             elif status["code"] == 12: # Connecting
