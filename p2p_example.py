@@ -28,7 +28,7 @@ class StatusThread(Thread):
                 print("Received public key.")
                 ready_to_send += 1
 
-p2p = P2P(2007, 2006)
+p2p = P2P()
 StatusThread(p2p).start()
 p2p.start(input("Enter the target machine IP: "))
 
