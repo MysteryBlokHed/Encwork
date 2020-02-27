@@ -133,7 +133,10 @@ class P2P(object):
                         full_message_dec = b""
                         for i in actual_full_message:
                             full_message_dec += decrypt(i, self._private_key)
-                        self._latest_statuses.append(Status(8, (full_message_dec.decode("utf-8"), addr)))
+                        if self._utf8:
+                            self._latest_statuses.append(Status(8, (full_message_dec.decode("utf-8"), addr)))
+                        else:
+                            self._latest_statuses.append(Status(8, (full_message_dec, addr)))
                         raise ExitTryExcept
             except ExitTryExcept:
                 pass
@@ -144,8 +147,9 @@ class P2P(object):
 
         `target: str` The IP to connect to/receive connection from.
 
-        `utf8: bool` Whether or not the incoming messages are encoded as UTF-8. Must be `False` for receiving files such as executables or media.
+        `utf8: bool` Whether or not to send/receive encoded as UTF-8. Must be `False` for receiving/sending files such as executables or media.
         """
+        self._utf8 = utf8
         # Set up server
         self._target = target
         self._latest_statuses.append(Status(3, "server"))
@@ -170,13 +174,11 @@ class P2P(object):
                 self._latest_statuses.append(Status(14, target))
                 sleep(5)
 
-    def send_msg(self, message: str or bytes, utf8: bool=True):
+    def send_msg(self, message: str or bytes):
         """
         Send a message to the peer.
 
         `message: str or bytes` The message to send. Should be str if utf8=True, and bytes if utf8=False.
-
-        `utf8: bool` Whether or not to encode the message as UTF-8. Essentially required for sending files such as executables or media.
         """
         # Check if the target is real
         if self._target is None:
@@ -192,7 +194,7 @@ class P2P(object):
         self._s.send(split_size_enc)
         # Send the message in as many parts as needed
         for i in range(split_size):
-            if utf8:
+            if self._utf8:
                 enc_message = self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key))
             else:
                 enc_message = self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_key))

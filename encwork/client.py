@@ -137,22 +137,23 @@ class Client(object):
                 self._latest_statuses.append(Status(14, self._target))
                 sleep(5)
 
-    def start(self, target: str):
+    def start(self, target: str, utf8: bool=True):
         """
         Start the Encwork client.
 
         `target: str` The server to connect to.
+
+        `utf8: bool` Whether or not to send/receive encoded as UTF-8. Must be `False` for receiving/sending files such as executables or media.
         """
+        self._utf8 = utf8
         self._target = target
         Thread(target=self._connection).start()
     
-    def send_msg(self, message: str, utf8: bool=True):
+    def send_msg(self, message: str):
         """
         Send a message to the server.
 
         `message: str` The message to send. Should be str if utf8=True, and bytes if utf8=False.
-
-        `utf8: bool` Whether or not to encode the message as UTF-8. Must be `False` for sending files such as executables or media.
         """
         # See if there is a target
         if self._target is None:
@@ -169,7 +170,7 @@ class Client(object):
         # Send the message in as many parts as needed
         self._latest_statuses.append(Status(16, self._target))
         for i in range(split_size):
-            if utf8:
+            if self._utf8:
                 self._s.send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key)))
             else:
                 self._s.send(self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_key)))

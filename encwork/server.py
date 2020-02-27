@@ -144,20 +144,18 @@ class Server(object):
         """
         Start the Encwork server.
 
-        `utf8: bool` Whether or not the incoming messages are encoded as UTF-8. Must be `False` for receiving files such as executables or media.
+        `utf8: bool` Whether or not to send/receive encoded as UTF-8. Must be `False` for receiving/sending files such as executables or media.
         """
         self._utf8 = utf8
         Thread(target=self._connection).start()
     
-    def send_msg(self, message: str, target: tuple, utf8: bool=True):
+    def send_msg(self, message: str, target: tuple):
         """
         Send a message to a target.
 
         `message: str or bytes` The message to send. Should be str if utf8=True, and bytes if utf8=False.
 
         `target: tuple` The IP & port to send the message to. They must have already connected to the server and have sent their public key.
-
-        `utf8: bool` Whether or not to encode the message as UTF-8. Must be `False` for sending files such as executables or media.
         """
         # Check if the target is real
         if target not in self._sockets:
@@ -174,7 +172,7 @@ class Server(object):
         # Send the message in as many parts as needed
         self._latest_statuses.append(Status(16, target))
         for i in range(split_size):
-            if utf8:
+            if self._utf8:
                 self._sockets[target].send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_keys[target])))
             else:
                 self._sockets[target].send(self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_keys[target])))
