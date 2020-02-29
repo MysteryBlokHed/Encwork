@@ -36,13 +36,18 @@ class P2P(object):
         """Add the 16-byte header (specifies msg length) to the message"""
         return bytes(f"{len(message):<{HEADERSIZE}}", "utf-8") + message
 
-    def statuses(self):
-        """Streams statuses, such as messages and encryption status."""
+    def statuses(self, update_frequency: float=0):
+        """
+        Streams statuses, such as messages and encryption status.
+        
+        `update_frequency: float` - How often to update statuses (used to save CPU). Set to `0` for live updates.
+        """
         while True:
             if len(self._latest_statuses) > 0:
                 for status in self._latest_statuses:
                     yield status
                 self._latest_statuses = []
+                sleep(update_frequency)
     
     def _connection(self):
         """Internal function to accept connections to receive and then start a new thread of itself."""
