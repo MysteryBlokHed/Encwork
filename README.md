@@ -1,4 +1,10 @@
 # Encwork
+<!-- Shields.io Badges -->
+[![Release](https://img.shields.io/github/v/release/MysteryBlokHed/Encwork?style=flat-square)](https://github.com/MysteryBlokHed/Encwork/releases)
+[![License](https://img.shields.io/github/license/MysteryBlokHed/Encwork?style=flat-square)](https://github.com/MysteryBlokHed/Encwork/blob/master/LICENSE)
+[![Wheel](https://img.shields.io/pypi/wheel/encwork?style=flat-square)](https://pypi.org/project/encwork/)
+[![Python](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue?style=flat-square)](https://www.python.org/downloads/)
+<!-- End of Badges -->
 RSA-encrypted networking library.
 
 ## What is it for?
