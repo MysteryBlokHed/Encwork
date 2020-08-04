@@ -1,5 +1,6 @@
 # Created by MysteryBlokHed on 21/02/2020.
 import socket
+import ssl
 from datetime import datetime
 from math import ceil
 from threading import Thread
@@ -15,7 +16,7 @@ class Server(object):
     """
     `port: int` - The port to host Encwork on.
     """
-    def __init__(self, port: int=2006):
+    def __init__(self, port: int=2006, context: ssl.SSLContext=None, hostname: str=""):
         self._peer_public_keys = {}
         self._sockets = {}
         self._latest_statuses = []
@@ -25,9 +26,18 @@ class Server(object):
         self._latest_statuses.append(Status(1))
         self._private_key = gen_private_key()
         self._latest_statuses.append(Status(2))
+
         # Set up socket
         self._latest_statuses.append(Status(3, "server"))
-        self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Wrap socket if ssl context was provided
+        if context is None or type(context) == ssl.SSLContext:
+            if type(context) == ssl.SSLContext:
+                self._s = context.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_hostname=hostname)
+            else:
+                self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            raise TypeError(f"Expected SSLContext for context, got {type(context).__name__}.")
+        
         self._s.bind(("0.0.0.0", port))
         self._s.listen(4)
         self._latest_statuses.append(Status(4, "server"))
