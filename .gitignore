@@ -1,1 +1,5 @@
+# Python
 *.pyc
+# Docs
+_build
+_static
