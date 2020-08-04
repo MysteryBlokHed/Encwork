@@ -16,20 +16,23 @@ class Client(object):
     `port: int` - The port that the server hosts Encwork on.
     """
     def __init__(self, port: int=2006):
-        self._peer_public_key = None
-        self._target = None
-        self._latest_statuses = []
+        # Server's public RSA key
+        self.__peer_public_key = None
+        # Server's Fernet key
+        self.__peer_key = None
+        self.__target = None
+        self.__latest_statuses = []
 
         self.port = port
-        # Generate private key
-        self._latest_statuses.append(Status(1))
-        self._private_key = gen_private_key()
-        self._latest_statuses.append(Status(2))
+        # Generate RSA private key
+        self.__latest_statuses.append(Status(1))
+        self.__private_key = gen_private_key()
+        self.__latest_statuses.append(Status(2))
         # Set up socket
-        self._latest_statuses.append(Status(3, "client"))
-        self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._latest_statuses.append(Status(4, "client"))
-    
+        self.__latest_statuses.append(Status(3, "client"))
+        self.__s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__latest_statuses.append(Status(4, "client"))
+
     def headerify(self, message: bytes):
         """Add the 16-byte header (specifies msg length) to the message"""
         return bytes(f"{len(message):<{HEADERSIZE}}", "utf-8") + message
@@ -37,57 +40,67 @@ class Client(object):
     def statuses(self):
         """Streams statuses, such as messages and encryption status."""
         while True:
-            if len(self._latest_statuses) > 0:
-                for status in self._latest_statuses:
+            if len(self.__latest_statuses) > 0:
+                for status in self.__latest_statuses:
                     yield status
-                self._latest_statuses = []
+                self.__latest_statuses = []
 
-    def _connection(self):
+    def __connection(self):
         """Internal function to connect to server and receive messages."""
         while True:
             try:
                 # Try to connect
-                self._latest_statuses.append(Status(12, self._target))
-                self._s.connect((self._target, self.port))
-                self._latest_statuses.append(Status(13, self._target))
+                self.__latest_statuses.append(Status(12, self.__target))
+                self.__s.connect((self.__target, self.port))
+                self.__latest_statuses.append(Status(13, self.__target))
                 # Send public key
-                self._latest_statuses.append(Status(10, self._target))
-                self._s.send(self.headerify(get_public_key_text(get_public_key(self._private_key))))
-                self._latest_statuses.append(Status(15, self._target))
+                self.__latest_statuses.append(Status(10, self.__target))
+                self.__s.send(get_public_key_text(get_public_key(self.__private_key)))
+                self.__latest_statuses.append(Status(15, self.__target))
 
                 # Receive public key
-                self._latest_statuses.append(Status(18, self._target))
-                try:
-                    full_msg = b""
-                    new_msg = True
+                self.__latest_statuses.append(Status(18, self.__target))
+                # try:
+                #     full_msg = b""
+                #     new_msg = True
 
-                    while True:
-                        msg = self._s.recv(16)
+                #     while True:
+                #         msg = self.__s.recv(16)
 
-                        if new_msg:
-                            msg_len = int(msg[:HEADERSIZE])
-                            new_msg = False
+                #         if new_msg:
+                #             msg_len = int(msg[:HEADERSIZE])
+                #             new_msg = False
                         
-                        full_msg += msg
+                #         full_msg += msg
 
-                        if(len(full_msg) - HEADERSIZE == msg_len):
-                            # Save the public key
-                            self._peer_public_key = full_msg[HEADERSIZE:]
-                            self._latest_statuses.append(Status(11, self._target))
-                            cont = True
-                            break
-                except Exception as e:
-                    self._latest_statuses.append(Status(19, self._target))
-                    cont = False
+                #         if(len(full_msg) - HEADERSIZE == msg_len):
+                #             # Save the public key
+                #             self.__peer_public_key = full_msg[HEADERSIZE:]
+                #             self.__latest_statuses.append(Status(11, self.__target))
+                #             cont = True
+                #             break
+                # except Exception as e:
+                #     self.__latest_statuses.append(Status(19, self.__target))
+                #     cont = False
+                try:
+                    # Get RSA key and save it
+                    msg = self.__s.recv(256)
+                    self.__peer_public_key = msg
+                    self.__latest_statuses.append(Status(11, self.__target))
+
+                    # Get RSA-encrypted Fernet key
+                    msg = self.__s.recv(256)
+                    self.__peer_key = decrypt_rsa(msg, self.__private_key)
                 
                 # Message receive loop
                 while cont:
+
                     full_msg = b""
                     try:
                         new_msg = True
 
                         while True:
-                            msg = self._s.recv(16)
+                            msg = self.__s.recv(16)
 
                             if new_msg:
                                 msg_len = int(msg[:HEADERSIZE])
@@ -96,9 +109,9 @@ class Client(object):
                             full_msg += msg
 
                             if(len(full_msg) - HEADERSIZE == msg_len):
-                                self._latest_statuses.append(Status(7, self._target))
+                                self.__latest_statuses.append(Status(7, self.__target))
                                 # Decrypt length and convert to int
-                                full_msg_len = int(decrypt(full_msg[HEADERSIZE:], self._private_key))
+                                full_msg_len = int(decrypt(full_msg[HEADERSIZE:], self.__private_key))
                                 actual_full_message = []
                                 # Get all parts of message
                                 for i in range(full_msg_len):
@@ -107,7 +120,7 @@ class Client(object):
                                         new_msg = True
 
                                         while True:
-                                            msg = self._s.recv(16)
+                                            msg = self.__s.recv(16)
 
                                             if new_msg:
                                                 msg_len = int(msg[:HEADERSIZE])
@@ -116,28 +129,27 @@ class Client(object):
                                             full_msg += msg
 
                                             if(len(full_msg) - HEADERSIZE == msg_len):
-                                                actual_full_message.append(full_msg[HEADERSIZE:])
+                                                self.__latest_statuses.append(Status(7, self.__target))
                                                 raise ExitTryExcept
                                     except ExitTryExcept:
                                         pass
                                     except Exception as e:
-                                        self._latest_statuses.append(Status(21, self._target))
+                                        self.__latest_statuses.append(Status(21, self.__target))
                                         cont = False
 
-                                # Assemble message
-                                full_message_dec = b""
-                                for i in actual_full_message:
-                                    full_message_dec += decrypt(i, self._private_key)
+                                # Decrypt message
+                                full_msg_dec = self.__private_key[1].decrypt(full_msg)
                                 if self._utf8:
-                                    self._latest_statuses.append(Status(8, (full_message_dec.decode("utf-8"), self._target)))
+                                    self.__latest_statuses.append(Status(8, (full_msg_dec.decode("utf-8"), self.__target)))
                                 else:
-                                    self._latest_statuses.append(Status(8, (full_message_dec, self._target)))
+                                    self.__latest_statuses.append(Status(8, (full_msg_dec, self.__target)))
+
                                 raise ExitTryExcept
                     except ExitTryExcept:
                         pass
             except:
                 # Failed connection
-                self._latest_statuses.append(Status(14, self._target))
+                self.__latest_statuses.append(Status(14, self.__target))
                 sleep(5)
 
     def start(self, target: str, utf8: bool=True):
@@ -148,33 +160,27 @@ class Client(object):
 
         `utf8: bool` Whether or not to send/receive encoded as UTF-8. Must be `False` for receiving/sending files such as executables or media.
         """
-        self._utf8 = utf8
-        self._target = target
-        Thread(target=self._connection).start()
+        self.__utf8 = utf8
+        self.__target = target
+        Thread(target=self.__connection).start()
     
-    def send_msg(self, message: str):
+    def send_msg(self, message: str or bytes):
         """
         Send a message to the server.
 
         `message: str` The message to send. Should be str if utf8=True, and bytes if utf8=False.
         """
         # See if there is a target
-        if self._target is None:
+        if self.__target is None:
             raise NoTargetError("No target is available to send messages to.")
         # See if a public key has been received
-        if self._peer_public_key is None:
+        if self.__peer_public_key is None:
             raise NoEncryptionKeyError("There is no public key to encrypt with.")
 
-        # Tell the peer many messages that come in are a part of this one
-        # (Done due to the size limit of RSA keys)
-        split_size = ceil(len(message)/446)
-        split_size_enc = self.headerify(encrypt(bytes(str(split_size), "utf-8"), self._peer_public_key))
-        self._s.send(split_size_enc)
-        # Send the message in as many parts as needed
-        self._latest_statuses.append(Status(16, self._target))
-        for i in range(split_size):
-            if self._utf8:
-                self._s.send(self.headerify(encrypt(bytes(message[446*i:446*(i+1)], "utf-8"), self._peer_public_key)))
-            else:
-                self._s.send(self.headerify(encrypt(message[446*i:446*(i+1)], self._peer_public_key)))
-        self._latest_statuses.append(Status(17, self._target))
+        # Send the message
+        self.__latest_statuses.append(Status(16, self.__target))
+
+        if self.__utf8:
+            self.__s.send(self.headerify(encrypt_fernet(bytes(message, "utf-8"), self.__peer_key)))
+        else:
+            self.__s.send(self.headerify(encrypt(message, self.__peer_key)))
